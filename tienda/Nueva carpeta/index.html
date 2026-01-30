@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Tienda</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos adicionales inline para asegurar funcionamiento */
+        .hidden { display: none !important; }
+        .visible { display: block !important; }
+        
+        /* Mejoras visuales */
+        .store-info {
+            background: #f0f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+            display: none;
+        }
+        
+        .store-info.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginContainer" class="login-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1><i class="fas fa-store"></i> Acceso Tienda</h1>
+                <p>Usa las credenciales proporcionadas por el proveedor</p>
+            </div>
+            
+            <div id="loginError" class="error-message"></div>
+            
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginUsername"><i class="fas fa-user"></i> Usuario</label>
+                    <input type="text" id="loginUsername" required 
+                           placeholder="Ingresa tu usuario" autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fas fa-lock"></i> Contraseña</label>
+                    <input type="password" id="loginPassword" required 
+                           placeholder="Ingresa tu contraseña" autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </button>
+            </form>
+            
+            <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+                <p><i class="fas fa-info-circle"></i> Contacta al proveedor si no tienes credenciales</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Store Dashboard (hidden by default) -->
+    <div id="dashboard" class="dashboard-container" style="display: none;">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1><i class="fas fa-store-alt"></i> Panel de Tienda</h1>
+                <div id="storeInfo" class="store-info-badge">
+                    <span id="storeName">Cargando información...</span>
+                </div>
+                <div id="status" class="status-badge online">
+                    <i class="fas fa-wifi"></i> <span>Conectado al Proveedor</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </header>
+        
+        <!-- Store Info -->
+        <div id="storeDetails" class="store-info">
+            <h3 id="storeUser">Usuario: Cargando...</h3>
+            <p>Última actualización: <span id="lastUpdate">--:--:--</span></p>
+        </div>
+        
+        <!-- Error Container -->
+        <div id="errorContainer" style="display: none;">
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error de Conexión</h3>
+                <p>No se pudo conectar con el proveedor</p>
+                <button onclick="window.loadProducts()" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i> Reintentar
+                </button>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="products-grid" id="productsGrid">
+                <div class="empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <h3>Cargando productos del proveedor...</h3>
+                    <p>Por favor espera</p>
+                </div>
+            </div>
+            
+            <!-- Stats Section -->
+            <div class="stats-container" style="margin-top: 30px; padding: 20px; background: white; border-radius: 12px; box-shadow: var(--shadow);">
+                <h3><i class="fas fa-chart-bar"></i> Resumen</h3>
+                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; margin-top: 15px;">
+                    <div class="stat-item" style="text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: var(--primary);" id="totalProducts">0</div>
+                        <div style="font-size: 12px; color: var(--gray);">Productos Disponibles</div>
+                    </div>
+                    <div class="stat-item" style="text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: var(--secondary);" id="lowStock">0</div>
+                        <div style="font-size: 12px; color: var(--gray);">Bajo Stock</div>
+                    </div>
+                    <div class="stat-item" style="text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold; color: var(--warning);" id="lastUpdateTime">--:--</div>
+                        <div style="font-size: 12px; color: var(--gray);">Última Actualización</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Install Button -->
+        <button id="installBtn" class="btn-install" style="display: none;">
+            <i class="fas fa-download"></i> Instalar App
+        </button>
+        
+        <!-- Refresh Floating Button -->
+        <button class="floating-refresh-btn" onclick="window.loadProducts()" title="Actualizar productos">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

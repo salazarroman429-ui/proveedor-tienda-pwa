@@ -1,0 +1,26 @@
+{
+    "name": "Tienda PWA",
+    "short_name": "Tienda",
+    "description": "Aplicación para tienda que visualiza productos del proveedor",
+    "start_url": "/tienda",
+    "display": "standalone",
+    "background_color": "#f093fb",
+    "theme_color": "#f5576c",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ],
+    "orientation": "portrait",
+    "categories": ["business", "shopping"],
+    "shortcuts": [
+        {
+            "name": "Ver Productos",
+            "short_name": "Productos",
+            "description": "Ver todos los productos disponibles",
+            "url": "/tienda#products"
+        }
+    ]
+}
