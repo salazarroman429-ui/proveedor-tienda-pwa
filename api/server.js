@@ -61,8 +61,8 @@ app.get('/', (req, res) => {
         <h1>🚀 API Proveedor-Tienda PWA</h1>
         <p><strong>Estado:</strong> ✅ Funcionando</p>
         <p><strong>URL API:</strong> https://tu-api.onrender.com/api</p>
-        <p><strong>Proveedor PWA:</strong> https://TUNOMBRE.github.io/proveedor-tienda-pwa/proveedor/</p>
-        <p><strong>Tienda PWA:</strong> https://TUNOMBRE.github.io/proveedor-tienda-pwa/tienda/</p>
+        <p><strong>Proveedor PWA:</strong> https://salazarroman429-ui.github.io/proveedor-tienda-pwa/proveedor/</p>
+        <p><strong>Tienda PWA:</strong> https://salazarroman429-ui.github.io/proveedor-tienda-pwa/tienda/</p>
         <hr>
         <p><a href="/api/status">/api/status</a> - Ver estado</p>
         <p><a href="/api/proveedor/productos">/api/proveedor/productos</a> - Ver productos</p>
