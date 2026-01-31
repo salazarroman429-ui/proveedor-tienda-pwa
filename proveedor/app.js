@@ -1,5 +1,5 @@
-// app.js - Versión corregida y actualizada
-const API_URL = 'https://proveedor-api-salazar.onrender.com/api';
+// app.js - Proveedor - Versión completa ACTUALIZADA para internet
+const API_URL = 'https://proveedor-api-salazar.onrender.com/api'; // URL actualizada
 let deferredPrompt;
 let isAuthenticated = false;
 let authHeaders = {};
@@ -35,15 +35,11 @@ loginForm.addEventListener('submit', async (e) => {
             isAuthenticated = true;
             authHeaders = { username, password };
             
-            // Mostrar dashboard
             loginContainer.style.display = 'none';
             dashboard.style.display = 'block';
             
-            // Cargar vista principal
             loadHomeView();
             checkConnection();
-            
-            // Iniciar actualizaciones periódicas
             startPeriodicUpdates();
         } else {
             showError(loginError, 'Credenciales incorrectas');
@@ -61,7 +57,6 @@ logoutBtn.addEventListener('click', () => {
     loginContainer.style.display = 'block';
     document.getElementById('loginPassword').value = '';
     
-    // Limpiar contenido
     breadcrumb.innerHTML = '<span class="breadcrumb-item active" data-action="home">Inicio</span>';
     mainContent.innerHTML = '';
 });
@@ -96,17 +91,8 @@ function showError(element, message) {
     }, 3000);
 }
 
-// ========== FUNCIONES MEJORADAS PARA LA VISTA PRINCIPAL ==========
-
-// Cargar vista principal actualizada
+// Cargar vista principal
 function loadHomeView() {
-    console.log('Cargando vista principal mejorada...');
-    
-    if (!breadcrumb || !mainContent) {
-        console.error('Elementos del DOM no encontrados');
-        return;
-    }
-    
     breadcrumb.innerHTML = '<span class="breadcrumb-item active" data-action="home">Inicio</span>';
     
     mainContent.innerHTML = `
@@ -163,19 +149,17 @@ function loadHomeView() {
             </div>
         </div>
         
-        <!-- Botón flotante para Todos los Productos -->
         <button class="floating-btn" onclick="window.viewAllProducts('todos')" title="Ver todos los productos">
             <i class="fas fa-boxes"></i>
             <span>Todos los Productos</span>
         </button>
     `;
     
-    // Cargar estadísticas actualizadas
+    // Cargar estadísticas
     loadStatistics();
 }
 
-// ========== FUNCIONES DE NAVEGACIÓN ACTUALIZADAS ==========
-
+// Funciones de navegación
 window.loadHomeView = loadHomeView;
 
 window.loadProductCategoriesView = function() {
@@ -190,7 +174,6 @@ window.loadProductCategoriesView = function() {
                 <i class="fas fa-cookie-bite"></i>
                 <h3>Confituras</h3>
                 <p>Mermeladas, dulces y conservas</p>
-                
                 <div class="card-actions">
                     <button class="card-action-btn" onclick="window.addProductToCategory('confituras')">
                         <i class="fas fa-plus"></i> Agregar Producto
@@ -208,7 +191,6 @@ window.loadProductCategoriesView = function() {
                 <i class="fas fa-utensils"></i>
                 <h3>Alimentos</h3>
                 <p>Alimentos básicos y procesados</p>
-                
                 <div class="card-actions">
                     <button class="card-action-btn" onclick="window.addProductToCategory('alimentos')">
                         <i class="fas fa-plus"></i> Agregar Producto
@@ -226,7 +208,6 @@ window.loadProductCategoriesView = function() {
                 <i class="fas fa-home"></i>
                 <h3>Utiles del Hogar</h3>
                 <p>Productos para el hogar</p>
-                
                 <div class="card-actions">
                     <button class="card-action-btn" onclick="window.addProductToCategory('utiles')">
                         <i class="fas fa-plus"></i> Agregar Producto
@@ -244,7 +225,6 @@ window.loadProductCategoriesView = function() {
                 <i class="fas fa-ellipsis-h"></i>
                 <h3>Otros</h3>
                 <p>Otras categorías de productos</p>
-                
                 <div class="card-actions">
                     <button class="card-action-btn" onclick="window.addProductToCategory('otros')">
                         <i class="fas fa-plus"></i> Agregar Producto
@@ -259,7 +239,6 @@ window.loadProductCategoriesView = function() {
             </div>
         </div>
         
-        <!-- Botón flotante para Todos los Productos -->
         <button class="floating-btn" onclick="window.viewAllProducts('todos')" title="Ver todos los productos">
             <i class="fas fa-boxes"></i>
             <span>Todos los Productos</span>
@@ -291,11 +270,8 @@ window.loadStoresView = function() {
         </div>
     `;
     
-    // Cargar datos de tiendas usando nueva ruta
     loadStoresData();
 };
-
-// ========== NUEVA FUNCIÓN PARA SOLICITUDES ==========
 
 window.loadRequestsView = function() {
     breadcrumb.innerHTML = `
@@ -361,11 +337,10 @@ window.viewAllProducts = function(category) {
         </div>
     `;
     
-    // Cargar productos usando nueva ruta
     loadProductsData(category);
 };
 
-// ========== FUNCIONES DE PRODUCTOS MEJORADAS ==========
+// ========== FUNCIONES DE PRODUCTOS ==========
 
 window.addProductToCategory = function(category) {
     const modal = document.getElementById('addProductModal');
@@ -383,14 +358,12 @@ window.addProductToCategory = function(category) {
     title.innerHTML = `<i class="fas fa-plus-circle"></i> Nuevo Producto - ${categoryNames[category]}`;
     categoriaInput.value = category;
     
-    // Reset form
     document.getElementById('productForm').reset();
     document.getElementById('productError').style.display = 'none';
     
     modal.style.display = 'flex';
 };
 
-// NUEVAS FUNCIONES PARA EDITAR Y ELIMINAR PRODUCTOS
 window.editProduct = function(productId) {
     const modal = document.getElementById('editProductModal');
     const title = document.getElementById('editProductModalTitle');
@@ -445,7 +418,7 @@ window.deleteProduct = async function(productId, productName) {
     }
 };
 
-// ========== FUNCIONES DE TIENDAS MEJORADAS ==========
+// ========== FUNCIONES DE TIENDAS ==========
 
 window.openAddStoreModal = function() {
     const modal = document.getElementById('addStoreModal');
@@ -454,7 +427,6 @@ window.openAddStoreModal = function() {
     modal.style.display = 'flex';
 };
 
-// NUEVA FUNCIÓN PARA ELIMINAR TIENDAS
 window.deleteStore = async function(storeId, storeName) {
     if (!confirm(`¿Estás seguro de eliminar la tienda "${storeName}"? Esta acción eliminará todas las solicitudes asociadas.`)) {
         return;
@@ -479,7 +451,7 @@ window.deleteStore = async function(storeId, storeName) {
     }
 };
 
-// ========== FUNCIONES DE SOLICITUDES (NUEVAS Y MEJORADAS) ==========
+// ========== FUNCIONES DE SOLICITUDES (ACTUALIZADAS) ==========
 
 window.viewRequestDetails = function(requestId) {
     const modal = document.getElementById('requestDetailsModal');
@@ -816,7 +788,7 @@ async function loadRequestsDataWithFilter(status) {
     }
 }
 
-// ========== FUNCIONES DE CARGA DE DATOS MEJORADAS ==========
+// ========== FUNCIONES DE CARGA DE DATOS ==========
 
 async function loadStatistics() {
     try {
@@ -847,24 +819,14 @@ async function loadStatistics() {
 }
 
 async function loadProductsData(category = 'todos') {
-    console.log('Cargando productos para categoría:', category);
-    
     try {
         const response = await fetch(`${API_URL}/proveedor/productos`);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
         const productos = await response.json();
-        console.log('Productos obtenidos:', productos);
         
-        // Filtrar por categoría si no es 'todos'
         const productosFiltrados = category === 'todos' 
             ? productos 
             : productos.filter(p => p.categoria === category);
         
-        console.log('Productos filtrados:', productosFiltrados);
         displayProductsData(productosFiltrados, category);
     } catch (error) {
         console.error('Error cargando productos:', error);
@@ -872,7 +834,6 @@ async function loadProductsData(category = 'todos') {
     }
 }
 
-// Función para mostrar productos (MEJORADA CON ACCIONES)
 function displayProductsData(productos, category) {
     const container = document.getElementById('productsListContainer');
     if (!container) return;
@@ -939,17 +900,9 @@ function displayProductsData(productos, category) {
 }
 
 async function loadStoresData() {
-    console.log('Cargando tiendas...');
-    
     try {
         const response = await fetch(`${API_URL}/proveedor/tiendas`);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
         const tiendas = await response.json();
-        console.log('Tiendas obtenidas:', tiendas);
         displayStoresData(tiendas);
     } catch (error) {
         console.error('Error cargando tiendas:', error);
@@ -957,7 +910,6 @@ async function loadStoresData() {
     }
 }
 
-// Función para mostrar tiendas (MEJORADA CON ACCIONES)
 function displayStoresData(tiendas) {
     const container = document.getElementById('storesListContainer');
     if (!container) return;
@@ -1088,18 +1040,14 @@ function displayRequestsData(solicitudes) {
     }).join('');
 }
 
-// ========== CONFIGURACIÓN DE FORMULARIOS MEJORADA ==========
+// ========== CONFIGURACIÓN DE FORMULARIOS ==========
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM cargado, configurando event listeners...');
-    
     // Formulario para agregar tienda
     const storeForm = document.getElementById('storeForm');
     if (storeForm) {
-        console.log('Configurando formulario de tienda...');
         storeForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('Enviando formulario de tienda...');
             
             const storeName = document.getElementById('storeName').value;
             const username = document.getElementById('storeUsername').value;
@@ -1127,7 +1075,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 const data = await response.json();
-                console.log('Respuesta crear tienda:', data);
                 
                 if (data.success) {
                     document.getElementById('addStoreModal').style.display = 'none';
@@ -1140,9 +1087,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     errorElement.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Error al crear tienda:', error);
                 const errorElement = document.getElementById('storeError');
-                errorElement.textContent = 'Error de conexión con el servidor: ' + error.message;
+                errorElement.textContent = 'Error de conexión con el servidor';
                 errorElement.style.display = 'block';
             }
         });
@@ -1151,10 +1097,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Formulario para agregar producto
     const productForm = document.getElementById('productForm');
     if (productForm) {
-        console.log('Configurando formulario de producto...');
         productForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('Enviando formulario de producto...');
             
             if (!isAuthenticated) {
                 alert('Debes iniciar sesión primero');
@@ -1179,8 +1123,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(producto)
                 });
                 
-                console.log('Respuesta crear producto:', response.status);
-                
                 if (response.ok) {
                     document.getElementById('addProductModal').style.display = 'none';
                     productForm.reset();
@@ -1191,27 +1133,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadStatistics();
                     alert('Producto agregado exitosamente');
                 } else {
-                    const errorData = await response.json();
                     const errorElement = document.getElementById('productError');
-                    errorElement.textContent = errorData.error || 'Error al guardar producto';
+                    errorElement.textContent = 'Error al guardar producto';
                     errorElement.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Error al crear producto:', error);
                 const errorElement = document.getElementById('productError');
-                errorElement.textContent = 'Error de conexión con el servidor: ' + error.message;
+                errorElement.textContent = 'Error de conexión con el servidor';
                 errorElement.style.display = 'block';
             }
         });
     }
     
-    // NUEVO: Formulario para editar producto
+    // Formulario para editar producto
     const editProductForm = document.getElementById('editProductForm');
     if (editProductForm) {
-        console.log('Configurando formulario de edición de producto...');
         editProductForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('Enviando formulario de edición de producto...');
             
             const productoId = document.getElementById('editProductId').value;
             const producto = {
@@ -1233,7 +1171,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 const data = await response.json();
-                console.log('Respuesta actualizar producto:', data);
                 
                 if (data.success) {
                     document.getElementById('editProductModal').style.display = 'none';
@@ -1246,9 +1183,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     errorElement.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Error al actualizar producto:', error);
                 const errorElement = document.getElementById('editProductError');
-                errorElement.textContent = 'Error de conexión con el servidor: ' + error.message;
+                errorElement.textContent = 'Error de conexión con el servidor';
                 errorElement.style.display = 'block';
             }
         });
@@ -1257,7 +1193,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar modales
     document.querySelectorAll('.close-modal').forEach(btn => {
         btn.addEventListener('click', function() {
-            console.log('Cerrando modal...');
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.style.display = 'none';
                 // Limpiar datos del modal de solicitudes
@@ -1275,7 +1210,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
-                console.log('Clic fuera del modal, cerrando...');
                 modal.style.display = 'none';
                 // Limpiar datos del modal de solicitudes
                 if (modal.id === 'requestDetailsModal') {
@@ -1289,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ========== FUNCIONES AUXILIARES MEJORADAS ==========
+// ========== FUNCIONES AUXILIARES ==========
 
 function showProductsError(category, message) {
     const container = document.getElementById('productsListContainer');
@@ -1299,14 +1233,9 @@ function showProductsError(category, message) {
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Error al cargar productos</h3>
                 <p>${message}</p>
-                <div style="margin-top: 20px;">
-                    <button onclick="window.loadProductsData('${category}')" class="btn-primary" style="width: auto; margin: 5px; padding: 10px 20px;">
-                        <i class="fas fa-redo"></i> Reintentar
-                    </button>
-                    <button onclick="window.loadHomeView()" class="btn-primary" style="width: auto; margin: 5px; padding: 10px 20px; background: #6b7280;">
-                        <i class="fas fa-home"></i> Volver al inicio
-                    </button>
-                </div>
+                <button onclick="window.loadProductsData('${category}')" class="btn-primary" style="width: auto; margin-top: 20px; padding: 10px 20px;">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
             </div>
         `;
     }
@@ -1320,14 +1249,9 @@ function showStoresError(message) {
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Error al cargar tiendas</h3>
                 <p>${message}</p>
-                <div style="margin-top: 20px;">
-                    <button onclick="window.loadStoresData()" class="btn-primary" style="width: auto; margin: 5px; padding: 10px 20px;">
-                        <i class="fas fa-redo"></i> Reintentar
-                    </button>
-                    <button onclick="window.loadHomeView()" class="btn-primary" style="width: auto; margin: 5px; padding: 10px 20px; background: #6b7280;">
-                        <i class="fas fa-home"></i> Volver al inicio
-                    </button>
-                </div>
+                <button onclick="window.loadStoresData()" class="btn-primary" style="width: auto; margin-top: 20px; padding: 10px 20px;">
+                    <i class="fas fa-redo"></i> Reintentar
+                </button>
             </div>
         `;
     }
@@ -1349,8 +1273,7 @@ function showRequestsError(message) {
     }
 }
 
-// ========== FUNCIONES DE ACTUALIZACIÓN PERIÓDICA MEJORADAS ==========
-
+// Actualizaciones periódicas
 function startPeriodicUpdates() {
     setInterval(() => {
         if (isAuthenticated) {
@@ -1390,942 +1313,7 @@ if ('serviceWorker' in navigator) {
         .catch(error => console.log('Error registrando SW:', error));
 }
 
-// ... (mantén tu CSS actual como está, solo agregaré estilos nuevos)
-// Añadir estilos CSS para el botón flotante y otros elementos
-const style = document.createElement('style');
-style.textContent = `
-    .floating-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 15px 20px;
-        border-radius: 50px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        z-index: 999;
-        transition: all 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-    }
-    
-    .floating-btn:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    }
-    
-    .floating-btn i {
-        font-size: 20px;
-    }
-    
-    .floating-btn span {
-        display: none;
-    }
-    
-    .floating-btn:hover span {
-        display: inline;
-    }
-    
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(-10px);
-        }
-    }
-    
-    /* Estilos para las tarjetas */
-    .product-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #667eea;
-    }
-    
-    .product-category {
-        background: #667eea;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-block;
-        margin-bottom: 10px;
-    }
-    
-    .product-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-    
-    .product-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .product-price {
-        color: #10b981;
-        font-weight: 600;
-        font-size: 20px;
-    }
-    
-    .product-description {
-        color: #6b7280;
-        margin-bottom: 15px;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    
-    .product-meta {
-        display: flex;
-        gap: 15px;
-        font-size: 13px;
-        color: #888;
-    }
-    
-    .store-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #10b981;
-    }
-    
-    .store-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .store-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .store-status {
-        font-size: 12px;
-        font-weight: 600;
-        padding: 4px 12px;
-        border-radius: 20px;
-    }
-    
-    .store-status.active {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .store-status.inactive {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-    
-    .store-info {
-        color: #6b7280;
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-    
-    .store-meta {
-        font-size: 12px;
-        color: #888;
-        display: flex;
-        gap: 10px;
-    }
-    
-    .products-list, .stores-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .section-header h2 {
-        font-size: 24px;
-        color: #1f2937;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6b7280;
-        grid-column: 1 / -1;
-    }
-    
-    .empty-state i {
-        font-size: 48px;
-        margin-bottom: 20px;
-        color: #e5e7eb;
-    }
-    
-    .empty-state h3 {
-        font-size: 18px;
-        margin-bottom: 10px;
-        color: #1f2937;
-    }
-    
-    .empty-state ul {
-        text-align: left;
-        max-width: 400px;
-        margin: 15px auto;
-        background: #f8fafc;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #667eea;
-    }
-    
-    .empty-state li {
-        margin: 5px 0;
-        font-family: monospace;
-        font-size: 14px;
-    }
-    
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 20px;
-    }
-    
-    .grid-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        text-align: center;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 2px solid transparent;
-    }
-    
-    .grid-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        border-color: #667eea;
-    }
-    
-    .grid-card i {
-        font-size: 40px;
-        margin-bottom: 15px;
-        color: #667eea;
-    }
-    
-    .grid-card h3 {
-        font-size: 18px;
-        margin-bottom: 8px;
-        color: #1f2937;
-    }
-    
-    .grid-card p {
-        color: #6b7280;
-        font-size: 14px;
-        line-height: 1.4;
-    }
-    
-    .category-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        position: relative;
-    }
-    
-    .category-card i {
-        color: white;
-    }
-    
-    .category-card .card-actions {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.9);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        border-radius: 12px;
-    }
-    
-    .category-card:hover .card-actions {
-        opacity: 1;
-    }
-    
-    .card-action-btn {
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        margin: 5px;
-        cursor: pointer;
-        font-weight: 600;
-        width: 80%;
-        transition: transform 0.2s;
-    }
-    
-    .card-action-btn:hover {
-        transform: scale(1.05);
-    }
-    
-    .card-action-btn.back {
-        background: #6b7280;
-    }
-    
-    .coming-soon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #f59e0b;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    /* Breadcrumb */
-    .breadcrumb {
-        padding: 15px 30px;
-        background: white;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .breadcrumb-item {
-        color: #6b7280;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 6px;
-        transition: all 0.2s;
-    }
-    
-    .breadcrumb-item:hover {
-        background: #e5e7eb;
-        color: #1f2937;
-    }
-    
-    .breadcrumb-item.active {
-        color: #667eea;
-        font-weight: 600;
-    }
-    
-    .breadcrumb-item:not(:last-child)::after {
-        content: "›";
-        margin: 0 8px;
-        color: #6b7280;
-    }
-
-    /* Estilos mejorados para estadísticas */
-    .stats-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-    }
-    
-    .stat-card {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        backdrop-filter: blur(10px);
-        transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-    }
-    
-    .stat-card i {
-        font-size: 32px;
-        color: #667eea;
-        margin-bottom: 10px;
-    }
-    
-    .stat-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1f2937;
-        margin: 10px 0;
-    }
-    
-    .stat-label {
-        color: #6b7280;
-        font-size: 14px;
-        font-weight: 500;
-    }
-    
-    .card-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #ef4444;
-        color: white;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    /* Estilos para solicitudes */
-    .requests-container {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-top: 20px;
-    }
-    
-    .request-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #667eea;
-    }
-    
-    .request-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-    
-    .request-info h3 {
-        font-size: 18px;
-        color: #1f2937;
-        margin-bottom: 5px;
-    }
-    
-    .request-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        font-size: 14px;
-        color: #6b7280;
-    }
-    
-    .request-meta span {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .request-status {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    .status-pendiente { background: #fef3c7; color: #92400e; }
-    .status-aceptada { background: #d1fae5; color: #065f46; }
-    .status-rechazada { background: #fee2e2; color: #991b1b; }
-    .status-modificada { background: #e0e7ff; color: #3730a3; }
-    
-    .request-products {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 15px;
-    }
-    
-    .product-tag {
-        background: #f3f4f6;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 13px;
-        color: #4b5563;
-    }
-    
-    .request-comments {
-        background: #f8fafc;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin-top: 10px;
-        font-size: 14px;
-        color: #4b5563;
-        border-left: 3px solid #cbd5e1;
-    }
-    
-    .request-actions {
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #e5e7eb;
-    }
-    
-    /* Estilos para acciones de producto y tienda */
-    .product-actions, .store-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #e5e7eb;
-    }
-    
-    .btn-small {
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        border: none;
-        transition: all 0.2s;
-    }
-    
-    .btn-small.btn-primary {
-        background: #667eea;
-        color: white;
-    }
-    
-    .btn-small.btn-danger {
-        background: #ef4444;
-        color: white;
-    }
-    
-    .btn-small:hover {
-        opacity: 0.9;
-        transform: translateY(-2px);
-    }
-    
-    /* Indicadores de stock */
-    .stock-badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-    }
-    
-    .stock-low { background: #fee2e2; color: #991b1b; }
-    .stock-medium { background: #fef3c7; color: #92400e; }
-    .stock-high { background: #d1fae5; color: #065f46; }
-    
-    .header-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    
-    /* Estilos del modal de solicitudes */
-    .request-product-item {
-        background: #f8fafc;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid #e5e7eb;
-    }
-    
-    .product-info {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .product-details {
-        font-size: 14px;
-        color: #4b5563;
-    }
-    
-    .approve-section {
-        margin-top: 8px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    /* Mantén tus estilos existentes y agrega estos nuevos */
-    .floating-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 15px 20px;
-        border-radius: 50px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        z-index: 999;
-        transition: all 0.3s ease;
-        animation: float 3s ease-in-out infinite;
-    }
-    
-    .floating-btn:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    }
-    
-    .floating-btn i {
-        font-size: 20px;
-    }
-    
-    .floating-btn span {
-        display: none;
-    }
-    
-    .floating-btn:hover span {
-        display: inline;
-    }
-    
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(-10px);
-        }
-    }
-    
-    /* Estilos para las tarjetas */
-    .product-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #667eea;
-    }
-    
-    .product-category {
-        background: #667eea;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-block;
-        margin-bottom: 10px;
-    }
-    
-    .product-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-    
-    .product-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .product-price {
-        color: #10b981;
-        font-weight: 600;
-        font-size: 20px;
-    }
-    
-    .product-description {
-        color: #6b7280;
-        margin-bottom: 15px;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    
-    .product-meta {
-        display: flex;
-        gap: 15px;
-        font-size: 13px;
-        color: #888;
-    }
-    
-    .store-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 4px solid #10b981;
-    }
-    
-    .store-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .store-name {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .store-status {
-        font-size: 12px;
-        font-weight: 600;
-        padding: 4px 12px;
-        border-radius: 20px;
-    }
-    
-    .store-status.active {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .store-status.inactive {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-    
-    .store-info {
-        color: #6b7280;
-        margin-bottom: 10px;
-        font-size: 14px;
-    }
-    
-    .store-meta {
-        font-size: 12px;
-        color: #888;
-        display: flex;
-        gap: 10px;
-    }
-    
-    .products-list, .stores-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
-    }
-    
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    
-    .section-header h2 {
-        font-size: 24px;
-        color: #1f2937;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6b7280;
-        grid-column: 1 / -1;
-    }
-    
-    .empty-state i {
-        font-size: 48px;
-        margin-bottom: 20px;
-        color: #e5e7eb;
-    }
-    
-    .empty-state h3 {
-        font-size: 18px;
-        margin-bottom: 10px;
-        color: #1f2937;
-    }
-    
-    .empty-state ul {
-        text-align: left;
-        max-width: 400px;
-        margin: 15px auto;
-        background: #f8fafc;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #667eea;
-    }
-    
-    .empty-state li {
-        margin: 5px 0;
-        font-family: monospace;
-        font-size: 14px;
-    }
-    
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 20px;
-    }
-    
-    .grid-card {
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        text-align: center;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border: 2px solid transparent;
-    }
-    
-    .grid-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        border-color: #667eea;
-    }
-    
-    .grid-card i {
-        font-size: 40px;
-        margin-bottom: 15px;
-        color: #667eea;
-    }
-    
-    .grid-card h3 {
-        font-size: 18px;
-        margin-bottom: 8px;
-        color: #1f2937;
-    }
-    
-    .grid-card p {
-        color: #6b7280;
-        font-size: 14px;
-        line-height: 1.4;
-    }
-    
-    .category-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        position: relative;
-    }
-    
-    .category-card i {
-        color: white;
-    }
-    
-    .category-card .card-actions {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.9);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-        border-radius: 12px;
-    }
-    
-    .category-card:hover .card-actions {
-        opacity: 1;
-    }
-    
-    .card-action-btn {
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        margin: 5px;
-        cursor: pointer;
-        font-weight: 600;
-        width: 80%;
-        transition: transform 0.2s;
-    }
-    
-    .card-action-btn:hover {
-        transform: scale(1.05);
-    }
-    
-    .card-action-btn.back {
-        background: #6b7280;
-    }
-    
-    .coming-soon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #f59e0b;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    /* Breadcrumb */
-    .breadcrumb {
-        padding: 15px 30px;
-        background: white;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .breadcrumb-item {
-        color: #6b7280;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 6px;
-        transition: all 0.2s;
-    }
-    
-    .breadcrumb-item:hover {
-        background: #e5e7eb;
-        color: #1f2937;
-    }
-    
-    .breadcrumb-item.active {
-        color: #667eea;
-        font-weight: 600;
-    }
-    
-    .breadcrumb-item:not(:last-child)::after {
-        content: "›";
-        margin: 0 8px;
-        color: #6b7280;
-    }
-`;
-document.head.appendChild(style);
-
-// Función para probar las rutas (útil para debugging)
+// Función para probar rutas (debugging)
 window.testRoutes = async function() {
     console.log('=== Probando rutas del servidor ===');
     
@@ -2348,3 +1336,18 @@ window.testRoutes = async function() {
     
     console.log('=== Fin de pruebas ===');
 };
+
+// Función para cargar CSS dinámicamente
+function loadStyles() {
+    // Solo cargar si no hay estilos ya aplicados
+    if (!document.querySelector('#proveedor-styles')) {
+        const link = document.createElement('link');
+        link.id = 'proveedor-styles';
+        link.rel = 'stylesheet';
+        link.href = 'styles.css'; // Archivo CSS externo
+        document.head.appendChild(link);
+    }
+}
+
+// Cargar estilos cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', loadStyles);
