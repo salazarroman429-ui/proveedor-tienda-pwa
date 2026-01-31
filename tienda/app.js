@@ -361,126 +361,38 @@ window.loadSolicitudesView = async function() {
 
 // ========== FUNCIONES DE PRODUCTOS ==========
 
-// Función para cargar productos del almacén central
+// Función para cargar productos del almacén central - VERSIÓN CORREGIDA
 async function loadProducts() {
     if (!isAuthenticated) {
         console.error('No autenticado para cargar productos');
         return;
     }
     
-    console.log('📦 Intentando cargar productos...');
+    console.log('📦 Cargando productos...');
     
     try {
-        // PRUEBA: Intentar múltiples rutas posibles
-        let productos = null;
-        let response = null;
+        // SOLUCIÓN: Usar solo la ruta correcta
+        const response = await fetch(`${API_URL}/tienda/productos`);
+        console.log('📤 Respuesta:', response.status, response.statusText);
         
-        // Intento 1: Ruta principal (la más probable)
-        try {
-            console.log('🔄 Intentando ruta: /tienda/productos');
-            response = await fetch(`${API_URL}/tienda/productos`);
-            console.log('📤 Respuesta /tienda/productos:', response.status, response.statusText);
-            
-            if (response.ok) {
-                productos = await response.json();
-                console.log('✅ Productos obtenidos de /tienda/productos:', productos ? productos.length : 0);
-            }
-        } catch (error1) {
-            console.error('❌ Error en /tienda/productos:', error1);
-        }
+        let productos = [];
         
-        // Intento 2: Ruta alternativa para productos públicos
-        if (!productos) {
-            try {
-                console.log('🔄 Intentando ruta alternativa: /productos');
-                response = await fetch(`${API_URL}/productos`);
-                console.log('📤 Respuesta /productos:', response.status, response.statusText);
-                
-                if (response.ok) {
-                    productos = await response.json();
-                    console.log('✅ Productos obtenidos de /productos:', productos ? productos.length : 0);
-                }
-            } catch (error2) {
-                console.error('❌ Error en /productos:', error2);
-            }
-        }
-        
-        // Intento 3: Ruta con autenticación (si está disponible)
-        if (!productos && authHeaders.username) {
-            try {
-                console.log('🔄 Intentando ruta con autenticación: /proveedor/productos');
-                response = await fetch(`${API_URL}/proveedor/productos`, {
-                    headers: {
-                        'username': authHeaders.username,
-                        'password': authHeaders.password
-                    }
-                });
-                console.log('📤 Respuesta /proveedor/productos:', response.status, response.statusText);
-                
-                if (response.ok) {
-                    productos = await response.json();
-                    console.log('✅ Productos obtenidos de /proveedor/productos:', productos ? productos.length : 0);
-                }
-            } catch (error3) {
-                console.error('❌ Error en /proveedor/productos:', error3);
-            }
-        }
-        
-        if (productos) {
-            displayProducts(productos);
-            updateCentralBadge(productos.length);
+        if (response.ok) {
+            productos = await response.json();
+            console.log(`✅ ${productos.length} productos obtenidos`);
         } else {
-            // Mostrar productos de ejemplo si la API no responde
-            console.log('⚠️ Usando productos de ejemplo');
-            const productosEjemplo = [
-                {
-                    id: '1',
-                    nombre: 'Galletas de Chocolate',
-                    descripcion: 'Deliciosas galletas con chispas de chocolate',
-                    precio: 5.99,
-                    cantidad: 50,
-                    unidad: 'paquete',
-                    categoria: 'alimentos',
-                    fecha: new Date().toISOString()
-                },
-                {
-                    id: '2',
-                    nombre: 'Mermelada de Fresa',
-                    descripcion: 'Mermelada casera 100% natural',
-                    precio: 8.50,
-                    cantidad: 30,
-                    unidad: 'frasco',
-                    categoria: 'confituras',
-                    fecha: new Date().toISOString()
-                },
-                {
-                    id: '3',
-                    nombre: 'Detergente Líquido',
-                    descripcion: 'Detergente concentrado para ropa',
-                    precio: 12.75,
-                    cantidad: 25,
-                    unidad: 'litro',
-                    categoria: 'utiles',
-                    fecha: new Date().toISOString()
-                },
-                {
-                    id: '4',
-                    nombre: 'Aceite de Oliva',
-                    descripcion: 'Aceite extra virgen de primera prensada',
-                    precio: 15.99,
-                    cantidad: 15,
-                    unidad: 'litro',
-                    categoria: 'alimentos',
-                    fecha: new Date().toISOString()
-                }
-            ];
-            displayProducts(productosEjemplo);
-            updateCentralBadge(productosEjemplo.length);
+            console.warn('⚠️ API no respondió ');
+            // Crear productos de ejemplo
+           
         }
+        
+        // Mostrar productos SIEMPRE
+        displayProducts(productos);
+        updateCentralBadge(productos.length);
         
     } catch (error) {
-        console.error('❌ Error crítico cargando productos:', error);
-        showProductsError('Error al cargar productos. Verifica tu conexión.');
+        console.error('❌ Error crítico:', error);
+        showProductsError('Error de conexión: ' + error.message);
     }
 }
 
