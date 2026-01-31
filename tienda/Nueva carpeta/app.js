@@ -364,7 +364,7 @@ async function loadProducts() {
         console.log('📦 Cargando productos del almacén central...');
         
         // USAR ESTA RUTA (NO requiere autenticación por headers) - CORRECCIÓN IMPORTANTE
-        const response = await fetch(`${API_URL}/tienda/productos`);
+        const response = await fetch(`${API_URL}/proveedor/productos`);
         
         console.log('📤 Respuesta productos:', response.status);
         
@@ -1254,7 +1254,7 @@ function showSolicitudesError(message) {
 async function updateCentralBadge(count) {
     if (count === undefined) {
         try {
-            const response = await fetch(`${API_URL}/tienda/productos`);
+            const response = await fetch(`${API_URL}/proveedor/productos`);
             
             if (response.ok) {
                 const productos = await response.json();
