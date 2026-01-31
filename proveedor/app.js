@@ -1,4 +1,4 @@
-// app.js - Versión completa actualizada (proveedor)
+// app.js - Versión corregida
 const API_URL = 'https://proveedor-api-salazar.onrender.com/api';
 let deferredPrompt;
 let isAuthenticated = false;
@@ -339,19 +339,16 @@ window.openAddStoreModal = function() {
     modal.style.display = 'flex';
 };
 
-// Función para cargar datos de productos (USA NUEVA RUTA)
+// Función para cargar datos de productos
 async function loadProductsData(category = 'todos') {
     console.log('Cargando productos para categoría:', category);
     
     try {
-        // USAR NUEVA RUTA: /api/proveedor/productos
+        // Usar ruta: /api/proveedor/productos
         const response = await fetch(`${API_URL}/proveedor/productos`);
         
         if (!response.ok) {
-            // Si falla, intentar con la ruta original como fallback
-            console.warn('Nueva ruta falló, intentando ruta original...');
-            await loadProductsFallback(category);
-            return;
+            throw new Error(`Error HTTP: ${response.status}`);
         }
         
         const productos = await response.json();
@@ -366,35 +363,6 @@ async function loadProductsData(category = 'todos') {
         displayProductsData(productosFiltrados, category);
     } catch (error) {
         console.error('Error cargando productos:', error);
-        showProductsError(category, error.message);
-    }
-}
-
-// Función de fallback para productos
-async function loadProductsFallback(category = 'todos') {
-    try {
-        // Intentar con la ruta original (con credenciales si es necesario)
-        const response = await fetch(`${API_URL}/productos`, {
-            headers: isAuthenticated ? {
-                'username': authHeaders.username,
-                'password': authHeaders.password
-            } : {}
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const productos = await response.json();
-        
-        // Filtrar por categoría
-        const productosFiltrados = category === 'todos' 
-            ? productos 
-            : productos.filter(p => p.categoria === category);
-        
-        displayProductsData(productosFiltrados, category);
-    } catch (error) {
-        console.error('Fallback también falló:', error);
         showProductsError(category, error.message);
     }
 }
@@ -457,19 +425,16 @@ function displayProductsData(productos, category) {
     `).join('');
 }
 
-// Función para cargar datos de tiendas (USA NUEVA RUTA)
+// Función para cargar datos de tiendas
 async function loadStoresData() {
     console.log('Cargando tiendas...');
     
     try {
-        // USAR NUEVA RUTA: /api/proveedor/tiendas
+        // Usar ruta: /api/proveedor/tiendas
         const response = await fetch(`${API_URL}/proveedor/tiendas`);
         
         if (!response.ok) {
-            // Si falla, intentar con la ruta original como fallback
-            console.warn('Nueva ruta de tiendas falló, intentando ruta original...');
-            await loadStoresFallback();
-            return;
+            throw new Error(`Error HTTP: ${response.status}`);
         }
         
         const tiendas = await response.json();
@@ -477,23 +442,6 @@ async function loadStoresData() {
         displayStoresData(tiendas);
     } catch (error) {
         console.error('Error cargando tiendas:', error);
-        showStoresError(error.message);
-    }
-}
-
-// Función de fallback para tiendas
-async function loadStoresFallback() {
-    try {
-        const response = await fetch(`${API_URL}/tiendas`);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        
-        const tiendas = await response.json();
-        displayStoresData(tiendas);
-    } catch (error) {
-        console.error('Fallback de tiendas también falló:', error);
         showStoresError(error.message);
     }
 }
@@ -554,11 +502,6 @@ function showProductsError(category, message) {
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Error al cargar productos</h3>
                 <p>${message}</p>
-                <p>Verifica que el servidor tenga las rutas configuradas:</p>
-                <ul style="text-align: left; margin: 10px 0;">
-                    <li>GET /api/proveedor/productos</li>
-                    <li>POST /api/productos</li>
-                </ul>
                 <div style="margin-top: 20px;">
                     <button onclick="window.loadProductsData('${category}')" class="btn-primary" style="width: auto; margin: 5px; padding: 10px 20px;">
                         <i class="fas fa-redo"></i> Reintentar
@@ -580,11 +523,6 @@ function showStoresError(message) {
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>Error al cargar tiendas</h3>
                 <p>${message}</p>
-                <p>Verifica que el servidor tenga las rutas configuradas:</p>
-                <ul style="text-align: left; margin: 10px 0;">
-                    <li>GET /api/proveedor/tiendas</li>
-                    <li>POST /api/tiendas</li>
-                </ul>
                 <div style="margin-top: 20px;">
                     <button onclick="window.loadStoresData()" class="btn-primary" style="width: auto; margin: 5px; padding: 10px 20px;">
                         <i class="fas fa-redo"></i> Reintentar
@@ -602,7 +540,7 @@ function showStoresError(message) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM cargado, configurando event listeners...');
     
-    // Formulario para agregar tienda
+    // Formulario para agregar tienda (CORREGIDO)
     const storeForm = document.getElementById('storeForm');
     if (storeForm) {
         console.log('Configurando formulario de tienda...');
@@ -623,7 +561,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             try {
-                const response = await fetch(`${API_URL}/tiendas`, {
+                // CORRECCIÓN: Usar /api/proveedor/tiendas
+                const response = await fetch(`${API_URL}/proveedor/tiendas`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -656,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Formulario para agregar producto
+    // Formulario para agregar producto (CORREGIDO)
     const productForm = document.getElementById('productForm');
     if (productForm) {
         console.log('Configurando formulario de producto...');
@@ -679,7 +618,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             
             try {
-                const response = await fetch(`${API_URL}/productos`, {
+                // CORRECCIÓN: Usar /api/proveedor/productos
+                const response = await fetch(`${API_URL}/proveedor/productos`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -762,6 +702,8 @@ if ('serviceWorker' in navigator) {
         .then(() => console.log('Service Worker registrado'))
         .catch(error => console.log('Error registrando SW:', error));
 }
+
+// ... (el resto del CSS se mantiene igual)
 
 // Añadir estilos CSS para el botón flotante y otros elementos
 const style = document.createElement('style');
