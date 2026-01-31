@@ -6,92 +6,81 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración ESPECÍFICA para Render + GitHub Pages
+// ========== CONFIGURACIÓN CORS ESPECÍFICA PARA GITHUB PAGES + RENDER ==========
+
+// Lista de orígenes permitidos
 const allowedOrigins = [
-    'https://salazarroman429-ui.github.io',  // GitHub Pages
-    'http://localhost:3000',                 // Desarrollo local
-    'http://localhost:8080',                 // Live Server común
-    'http://127.0.0.1:3000',                // Localhost alternativo
+    'https://salazarroman429-ui.github.io',  // Tu GitHub Pages
+    'http://localhost:3000',
+    'http://localhost:8080',
+    'http://127.0.0.1:3000',
     'http://127.0.0.1:8080',
-    'http://192.168.1.*:*',                 // Red local
-    'https://*.onrender.com'                // Render domains
+    'https://*.onrender.com',                // Todos los dominios de Render
+    'http://*.onrender.com'
 ];
 
 // Middleware CORS personalizado
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    
-    // Permitir todos los orígenes en desarrollo
-    if (process.env.NODE_ENV !== 'production') {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-    } 
-    // En producción, verificar orígenes permitidos
-    else if (origin && allowedOrigins.some(allowed => {
-        if (allowed.includes('*')) {
-            const regex = new RegExp(allowed.replace('*', '.*'));
-            return regex.test(origin);
-        }
-        return origin === allowed;
-    })) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    
-    // Manejar preflight requests
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    next();
-});
-
-// También usar el middleware cors como respaldo
-app.use(cors({
+const corsOptions = {
     origin: function (origin, callback) {
-        // Permitir requests sin origen (como apps móviles o curl)
+        // Permitir requests sin origen (como mobile apps o curl)
         if (!origin) return callback(null, true);
         
+        // En desarrollo, permitir todo
         if (process.env.NODE_ENV !== 'production') {
             return callback(null, true);
         }
         
-        if (allowedOrigins.some(allowed => {
-            if (allowed.includes('*')) {
-                const regex = new RegExp(allowed.replace('*', '.*'));
-                return regex.test(origin);
+        // Verificar contra lista de orígenes permitidos
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (allowed.includes('*.')) {
+                // Para patrones como *.onrender.com
+                const domain = allowed.replace('*.', '');
+                return origin.endsWith(domain);
             }
             return origin === allowed;
-        })) {
-            return callback(null, true);
-        }
+        });
         
-        console.warn(`⚠️ Origen bloqueado: ${origin}`);
-        return callback(new Error('Not allowed by CORS'), false);
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            console.warn(`⚠️ Origen bloqueado por CORS: ${origin}`);
+            callback(new Error('Not allowed by CORS'), false);
+        }
     },
     credentials: true,
-    optionsSuccessStatus: 200
-}));
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+};
+
+app.use(cors(corsOptions));
+
+// Manejar preflight requests explícitamente
+app.options('*', cors(corsOptions));
+
+// ========== MIDDLEWARES ==========
 
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging mejorado
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
-    const origin = req.headers.origin || 'Sin origen';
-    const userAgent = req.headers['user-agent'] || 'Sin user-agent';
+    console.log(`\n📥 [${timestamp}] ${req.method} ${req.originalUrl}`);
+    console.log(`   Origin: ${req.headers.origin || 'No origin'}`);
+    console.log(`   Content-Type: ${req.headers['content-type'] || 'No content-type'}`);
+    console.log(`   User-Agent: ${(req.headers['user-agent'] || '').substring(0, 60)}...`);
     
-    console.log(`\n📥 ${timestamp} ${req.method} ${req.url}`);
-    console.log(`   Origen: ${origin}`);
-    console.log(`   User-Agent: ${userAgent.substring(0, 50)}...`);
-    console.log(`   Content-Type: ${req.headers['content-type'] || 'No especificado'}`);
+    // Log del body para POST/PUT (útil para debug)
+    if (req.method === 'POST' || req.method === 'PUT') {
+        console.log(`   Body:`, JSON.stringify(req.body).substring(0, 200) + '...');
+    }
     
     next();
 });
 
-// Archivos de datos
+// ========== CONFIGURACIÓN DE ARCHIVOS ==========
+
 const DATA_DIR = __dirname;
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
 const STORES_FILE = path.join(DATA_DIR, 'stores.json');
@@ -103,11 +92,11 @@ const PROVEEDOR_CREDENTIALS = {
     password: "adm429"
 };
 
-// Datos iniciales
+// Inicializar archivos
 function initializeFiles() {
     try {
         if (!fs.existsSync(PRODUCTS_FILE)) {
-            fs.writeFileSync(PRODUCTS_FILE, JSON.stringify([
+            const initialProducts = [
                 {
                     id: 1,
                     nombre: "Mermelada de Fresa",
@@ -117,28 +106,49 @@ function initializeFiles() {
                     categoria: "confituras",
                     unidad: "frasco",
                     fecha: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    nombre: "Miel de Abeja Pura",
+                    descripcion: "Miel 100% natural 500g",
+                    precio: 8.50,
+                    cantidad: 50,
+                    categoria: "endulzantes",
+                    unidad: "frasco",
+                    fecha: new Date().toISOString()
                 }
-            ], null, 2));
+            ];
+            fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(initialProducts, null, 2));
+            console.log('✅ products.json inicializado con 2 productos');
         }
 
         if (!fs.existsSync(STORES_FILE)) {
-            fs.writeFileSync(STORES_FILE, JSON.stringify([
+            const initialStores = [
                 {
                     id: 1,
-                    storename: "Tienda Demo",
+                    storename: "Tienda Central",
                     username: "tienda1",
                     password: "tienda123",
                     fechaCreacion: new Date().toISOString(),
                     activa: true
+                },
+                {
+                    id: 2,
+                    storename: "Supermercado Norte",
+                    username: "tienda2",
+                    password: "tienda456",
+                    fechaCreacion: new Date().toISOString(),
+                    activa: true
                 }
-            ], null, 2));
+            ];
+            fs.writeFileSync(STORES_FILE, JSON.stringify(initialStores, null, 2));
+            console.log('✅ stores.json inicializado con 2 tiendas');
         }
 
         if (!fs.existsSync(REQUESTS_FILE)) {
             fs.writeFileSync(REQUESTS_FILE, JSON.stringify([], null, 2));
+            console.log('✅ requests.json inicializado vacío');
         }
-        
-        console.log('✅ Archivos JSON inicializados correctamente');
     } catch (error) {
         console.error('❌ Error inicializando archivos:', error);
     }
@@ -146,313 +156,682 @@ function initializeFiles() {
 
 initializeFiles();
 
-// ========== RUTAS DE PRUEBA PARA GITHUB PAGES ==========
+// ========== RUTAS DE DIAGNÓSTICO ==========
 
-// Ruta de prueba simple (texto plano)
+// Ruta de prueba simple
 app.get('/ping', (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.send('pong');
 });
 
-// Ruta de prueba JSON
-app.get('/api/test-cors', (req, res) => {
+// Ruta para verificar que el servidor responde
+app.get('/health', (req, res) => {
     res.json({
-        success: true,
-        message: 'CORS funcionando correctamente',
-        origin: req.headers.origin,
+        status: 'healthy',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        service: 'proveedor-tienda-api',
+        version: '2.0.0'
     });
 });
 
-// Ruta para verificar configuraciones
-app.get('/api/debug', (req, res) => {
+// Ruta para debug de CORS
+app.get('/api/debug/cors', (req, res) => {
     const debugInfo = {
-        serverTime: new Date().toISOString(),
-        nodeEnv: process.env.NODE_ENV,
-        port: PORT,
-        allowedOrigins: allowedOrigins,
-        requestOrigin: req.headers.origin,
-        requestHeaders: req.headers,
-        files: {
-            products: fs.existsSync(PRODUCTS_FILE),
-            stores: fs.existsSync(STORES_FILE),
-            requests: fs.existsSync(REQUESTS_FILE)
+        timestamp: new Date().toISOString(),
+        request: {
+            method: req.method,
+            url: req.url,
+            origin: req.headers.origin,
+            headers: req.headers
+        },
+        cors: {
+            allowedOrigins: allowedOrigins,
+            isAllowed: allowedOrigins.some(allowed => {
+                if (allowed.includes('*.')) {
+                    const domain = allowed.replace('*.', '');
+                    return req.headers.origin?.endsWith(domain);
+                }
+                return req.headers.origin === allowed;
+            })
         }
     };
     
-    console.log('🔍 Debug info:', debugInfo);
+    console.log('🔍 Debug CORS:', debugInfo);
     res.json(debugInfo);
 });
 
-// ========== PÁGINA PRINCIPAL ==========
+// Ruta para listar TODAS las rutas disponibles
+app.get('/api/routes', (req, res) => {
+    const routes = [];
+    
+    app._router.stack.forEach((middleware) => {
+        if (middleware.route) {
+            // Rutas directas
+            routes.push({
+                path: middleware.route.path,
+                methods: Object.keys(middleware.route.methods)
+            });
+        } else if (middleware.name === 'router') {
+            // Rutas de router
+            middleware.handle.stack.forEach((handler) => {
+                if (handler.route) {
+                    routes.push({
+                        path: handler.route.path,
+                        methods: Object.keys(handler.route.methods)
+                    });
+                }
+            });
+        }
+    });
+    
+    res.json({
+        count: routes.length,
+        routes: routes.sort((a, b) => a.path.localeCompare(b.path))
+    });
+});
+
+// ========== PÁGINA PRINCIPAL CON INFO DETALLADA ==========
 
 app.get('/', (req, res) => {
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>🚀 API Proveedor-Tienda PWA (Render + GitHub Pages)</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
-                .success { color: #28a745; font-weight: bold; }
-                .warning { color: #ffc107; font-weight: bold; }
-                .endpoint { 
-                    background: #f8f9fa; 
-                    padding: 15px; 
-                    margin: 15px 0; 
-                    border-left: 4px solid #007bff;
-                    border-radius: 5px;
-                }
-                code { background: #e9ecef; padding: 2px 5px; border-radius: 3px; }
-                .test-btn { 
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    padding: 10px 15px; 
-                    border-radius: 5px; 
-                    cursor: pointer; 
-                    margin: 5px;
-                }
-                .test-btn:hover { background: #0056b3; }
-                #test-results { margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; }
-            </style>
-        </head>
-        <body>
-            <h1>🚀 API Proveedor-Tienda PWA</h1>
-            <p class="success"><strong>Estado:</strong> ✅ Funcionando en Render</p>
-            <p><strong>Configurado para:</strong> GitHub Pages + Render</p>
-            <p><strong>Puerto:</strong> ${PORT}</p>
-            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    
+    const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>🚀 API Proveedor-Tienda</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                line-height: 1.6; 
+                color: #333;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+            }
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                overflow: hidden;
+            }
+            header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px;
+                text-align: center;
+            }
+            h1 { font-size: 2.5rem; margin-bottom: 10px; }
+            .status { 
+                display: inline-block; 
+                background: rgba(255,255,255,0.2); 
+                padding: 5px 15px; 
+                border-radius: 20px; 
+                font-size: 0.9rem; 
+                margin-bottom: 20px;
+            }
+            .content { padding: 40px; }
+            .grid { 
+                display: grid; 
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+                gap: 20px; 
+                margin: 30px 0;
+            }
+            .card {
+                background: #f8f9fa;
+                border-radius: 10px;
+                padding: 20px;
+                border: 1px solid #e9ecef;
+                transition: transform 0.3s, box-shadow 0.3s;
+            }
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            .card h3 { color: #667eea; margin-bottom: 15px; }
+            .endpoint {
+                background: white;
+                padding: 10px 15px;
+                margin: 10px 0;
+                border-radius: 8px;
+                border-left: 4px solid #667eea;
+            }
+            .method {
+                display: inline-block;
+                padding: 3px 8px;
+                border-radius: 4px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                margin-right: 10px;
+            }
+            .get { background: #61affe; color: white; }
+            .post { background: #49cc90; color: white; }
+            .put { background: #fca130; color: white; }
+            .delete { background: #f93e3e; color: white; }
+            .test-btn {
+                background: #667eea;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 1rem;
+                margin: 5px;
+                transition: background 0.3s;
+            }
+            .test-btn:hover { background: #5a67d8; }
+            .results {
+                margin-top: 20px;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                display: none;
+            }
+            pre {
+                background: #1a1a1a;
+                color: #00ff00;
+                padding: 15px;
+                border-radius: 5px;
+                overflow-x: auto;
+                font-family: 'Courier New', monospace;
+                font-size: 0.9rem;
+            }
+            .alert {
+                padding: 15px;
+                border-radius: 5px;
+                margin: 20px 0;
+            }
+            .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+            .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>🚀 API Proveedor-Tienda PWA</h1>
+                <div class="status">✅ CONECTADO • Puerto: ${PORT} • ${new Date().toLocaleString()}</div>
+                <p>Backend para sistema de gestión proveedor-tienda</p>
+            </header>
             
-            <h2>🌐 Configuración CORS:</h2>
-            <ul>
-                <li>GitHub Pages: <code>https://salazarroman429-ui.github.io</code></li>
-                <li>Desarrollo local permitido</li>
-                <li>Render domains permitidos</li>
-            </ul>
-            
-            <h2>🛠 Endpoints de prueba:</h2>
-            <div class="endpoint">
-                <strong>GET <code>/ping</code></strong><br>
-                <em>Prueba básica de conexión (texto plano)</em><br>
-                <button class="test-btn" onclick="testEndpoint('/ping', 'text')">Probar</button>
-            </div>
-            
-            <div class="endpoint">
-                <strong>GET <code>/api/test-cors</code></strong><br>
-                <em>Prueba de CORS con JSON</em><br>
-                <button class="test-btn" onclick="testEndpoint('/api/test-cors', 'json')">Probar</button>
-            </div>
-            
-            <div class="endpoint">
-                <strong>GET <code>/api/debug</code></strong><br>
-                <em>Información de debug del servidor</em><br>
-                <button class="test-btn" onclick="testEndpoint('/api/debug', 'json')">Probar</button>
-            </div>
-            
-            <div class="endpoint">
-                <strong>GET <code>/api/status</code></strong><br>
-                <em>Estado del sistema</em><br>
-                <button class="test-btn" onclick="testEndpoint('/api/status', 'json')">Probar</button>
-            </div>
-            
-            <div id="test-results"></div>
-            
-            <h2>🔧 Prueba desde GitHub Pages:</h2>
-            <button class="test-btn" onclick="testFromGitHubPages()">Probar desde GitHub Pages</button>
-            
-            <script>
-                async function testEndpoint(url, type) {
-                    const results = document.getElementById('test-results');
-                    results.innerHTML = '<p>Probando... ⏳</p>';
-                    
-                    try {
-                        const response = await fetch(url);
-                        const data = type === 'json' ? await response.json() : await response.text();
-                        
-                        results.innerHTML = \`
-                            <p class="success">✅ Conexión exitosa a \${url}</p>
-                            <p><strong>Status:</strong> \${response.status} \${response.statusText}</p>
-                            <p><strong>Headers:</strong></p>
-                            <pre>\${JSON.stringify([...response.headers], null, 2)}</pre>
-                            <p><strong>Respuesta (\${type}):</strong></p>
-                            <pre>\${typeof data === 'string' ? data : JSON.stringify(data, null, 2)}</pre>
-                        \`;
-                    } catch (error) {
-                        results.innerHTML = \`
-                            <p class="warning">❌ Error conectando a \${url}</p>
-                            <p><strong>Error:</strong> \${error.message}</p>
-                            <p><strong>Stack:</strong> \${error.stack}</p>
-                        \`;
-                    }
-                }
+            <div class="content">
+                <div class="alert alert-success">
+                    <strong>Base URL:</strong> ${baseUrl}<br>
+                    <strong>Frontend (GitHub Pages):</strong> https://salazarroman429-ui.github.io/proveedor-tienda-pwa/
+                </div>
                 
-                async function testFromGitHubPages() {
-                    const results = document.getElementById('test-results');
-                    results.innerHTML = '<p>Simulando petición desde GitHub Pages... ⏳</p>';
+                <h2>🔧 Endpoints Principales</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>📦 Productos (Proveedor)</h3>
+                        <div class="endpoint">
+                            <span class="method get">GET</span>
+                            <code>/api/proveedor/productos</code>
+                            <p><small>Listar todos los productos</small></p>
+                            <button class="test-btn" onclick="testEndpoint('GET', '/api/proveedor/productos')">Probar</button>
+                        </div>
+                        <div class="endpoint">
+                            <span class="method post">POST</span>
+                            <code>/api/proveedor/productos</code>
+                            <p><small>Crear nuevo producto</small></p>
+                            <button class="test-btn" onclick="testCreateProduct()">Probar Crear</button>
+                        </div>
+                        <div class="endpoint">
+                            <span class="method put">PUT</span>
+                            <code>/api/proveedor/productos/:id</code>
+                            <p><small>Actualizar producto</small></p>
+                        </div>
+                        <div class="endpoint">
+                            <span class="method delete">DELETE</span>
+                            <code>/api/proveedor/productos/:id</code>
+                            <p><small>Eliminar producto</small></p>
+                        </div>
+                    </div>
                     
-                    // Simular petición como si viniera de GitHub Pages
-                    try {
-                        const response = await fetch('/api/test-cors', {
-                            headers: {
-                                'Origin': 'https://salazarroman429-ui.github.io'
-                            }
-                        });
-                        
-                        const data = await response.json();
-                        
-                        results.innerHTML = \`
-                            <p class="success">✅ Simulación GitHub Pages exitosa</p>
-                            <p><strong>Origen simulado:</strong> https://salazarroman429-ui.github.io</p>
-                            <p><strong>Respuesta del servidor:</strong></p>
-                            <pre>\${JSON.stringify(data, null, 2)}</pre>
-                            <p><strong>Nota:</strong> Si esto funciona, tu frontend en GitHub Pages debería poder conectarse.</p>
-                        \`;
-                    } catch (error) {
-                        results.innerHTML = \`
-                            <p class="warning">❌ Error en simulación</p>
-                            <p><strong>Error:</strong> \${error.message}</p>
-                            <p>Esto indica que hay un problema de CORS.</p>
-                        \`;
+                    <div class="card">
+                        <h3>🏪 Tiendas</h3>
+                        <div class="endpoint">
+                            <span class="method get">GET</span>
+                            <code>/api/proveedor/tiendas</code>
+                            <p><small>Listar tiendas</small></p>
+                            <button class="test-btn" onclick="testEndpoint('GET', '/api/proveedor/tiendas')">Probar</button>
+                        </div>
+                        <div class="endpoint">
+                            <span class="method post">POST</span>
+                            <code>/api/proveedor/tiendas</code>
+                            <p><small>Crear tienda</small></p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>🔐 Autenticación</h3>
+                        <div class="endpoint">
+                            <span class="method post">POST</span>
+                            <code>/api/proveedor/login</code>
+                            <p><small>Login proveedor</small></p>
+                            <button class="test-btn" onclick="testLogin()">Probar Login</button>
+                        </div>
+                        <div class="endpoint">
+                            <span class="method post">POST</span>
+                            <code>/api/tienda/login</code>
+                            <p><small>Login tienda</small></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h2>🛠 Herramientas de Debug</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>🔍 Diagnóstico</h3>
+                        <button class="test-btn" onclick="testEndpoint('GET', '/ping')">Test Ping</button>
+                        <button class="test-btn" onclick="testEndpoint('GET', '/health')">Health Check</button>
+                        <button class="test-btn" onclick="testEndpoint('GET', '/api/debug/cors')">Debug CORS</button>
+                        <button class="test-btn" onclick="testEndpoint('GET', '/api/routes')">Ver Rutas</button>
+                    </div>
+                </div>
+                
+                <div id="results" class="results"></div>
+            </div>
+        </div>
+        
+        <script>
+            async function testEndpoint(method, endpoint) {
+                const results = document.getElementById('results');
+                results.style.display = 'block';
+                results.innerHTML = '<p>🔄 Probando conexión... <span class="loading">⏳</span></p>';
+                
+                try {
+                    const options = {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    };
+                    
+                    if (method === 'POST' || method === 'PUT') {
+                        options.body = JSON.stringify({ test: true });
                     }
+                    
+                    const startTime = Date.now();
+                    const response = await fetch(endpoint, options);
+                    const endTime = Date.now();
+                    const duration = endTime - startTime;
+                    
+                    let data;
+                    const contentType = response.headers.get('content-type');
+                    
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        data = await response.text();
+                    }
+                    
+                    const statusClass = response.ok ? 'alert-success' : 'alert-error';
+                    
+                    results.innerHTML = \`
+                        <div class="alert \${statusClass}">
+                            <strong>\${method} \${endpoint}</strong>
+                            <p>Status: \${response.status} \${response.statusText} • Tiempo: \${duration}ms</p>
+                            <p>Content-Type: \${contentType || 'No especificado'}</p>
+                        </div>
+                        <pre>\${JSON.stringify(data, null, 2)}</pre>
+                        <button class="test-btn" onclick="document.getElementById('results').style.display='none'">Cerrar</button>
+                    \`;
+                    
+                } catch (error) {
+                    results.innerHTML = \`
+                        <div class="alert alert-error">
+                            <strong>❌ Error en \${method} \${endpoint}</strong>
+                            <p>\${error.message}</p>
+                            <p>Verifica la consola para más detalles.</p>
+                        </div>
+                        <button class="test-btn" onclick="document.getElementById('results').style.display='none'">Cerrar</button>
+                    \`;
+                    console.error('Error en test:', error);
                 }
-            </script>
-        </body>
-        </html>
-    `);
+            }
+            
+            async function testLogin() {
+                const results = document.getElementById('results');
+                results.style.display = 'block';
+                results.innerHTML = '<p>🔄 Probando login... <span class="loading">⏳</span></p>';
+                
+                try {
+                    const response = await fetch('/api/proveedor/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: 'Admin429',
+                            password: 'adm429'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    results.innerHTML = \`
+                        <div class="alert \${response.ok ? 'alert-success' : 'alert-error'}">
+                            <strong>POST /api/proveedor/login</strong>
+                            <p>Status: \${response.status} \${response.statusText}</p>
+                            <p>\${data.message || data.error}</p>
+                        </div>
+                        <pre>\${JSON.stringify(data, null, 2)}</pre>
+                        <button class="test-btn" onclick="document.getElementById('results').style.display='none'">Cerrar</button>
+                    \`;
+                    
+                } catch (error) {
+                    results.innerHTML = \`
+                        <div class="alert alert-error">
+                            <strong>❌ Error en login</strong>
+                            <p>\${error.message}</p>
+                        </div>
+                        <button class="test-btn" onclick="document.getElementById('results').style.display='none'">Cerrar</button>
+                    \`;
+                }
+            }
+            
+            async function testCreateProduct() {
+                const results = document.getElementById('results');
+                results.style.display = 'block';
+                results.innerHTML = '<p>🔄 Creando producto de prueba... <span class="loading">⏳</span></p>';
+                
+                const testProduct = {
+                    nombre: 'Producto de Prueba ' + Date.now(),
+                    descripcion: 'Este es un producto creado desde la página de test',
+                    precio: 9.99,
+                    cantidad: 100,
+                    categoria: 'pruebas',
+                    unidad: 'unidad'
+                };
+                
+                try {
+                    const response = await fetch('/api/proveedor/productos', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(testProduct)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    results.innerHTML = \`
+                        <div class="alert \${response.ok ? 'alert-success' : 'alert-error'}">
+                            <strong>POST /api/proveedor/productos</strong>
+                            <p>Status: \${response.status} \${response.statusText}</p>
+                            <p>\${data.message || data.error || 'Producto creado'}</p>
+                        </div>
+                        <pre>\${JSON.stringify(data, null, 2)}</pre>
+                        <button class="test-btn" onclick="testEndpoint('GET', '/api/proveedor/productos')">Ver Productos</button>
+                        <button class="test-btn" onclick="document.getElementById('results').style.display='none'">Cerrar</button>
+                    \`;
+                    
+                } catch (error) {
+                    results.innerHTML = \`
+                        <div class="alert alert-error">
+                            <strong>❌ Error creando producto</strong>
+                            <p>\${error.message}</p>
+                            <p>Revisa la consola del servidor para más detalles.</p>
+                        </div>
+                        <button class="test-btn" onclick="document.getElementById('results').style.display='none'">Cerrar</button>
+                    \`;
+                }
+            }
+            
+            // Probar conexión automáticamente al cargar
+            window.addEventListener('load', () => {
+                testEndpoint('GET', '/health');
+            });
+        </script>
+    </body>
+    </html>
+    `;
+    
+    res.send(html);
 });
 
 // ========== RUTAS DEL PROVEEDOR ==========
 
 // Login proveedor
 app.post('/api/proveedor/login', (req, res) => {
-    console.log('🔐 Login proveedor desde:', req.headers.origin);
+    console.log('🔐 POST /api/proveedor/login - Intentando login...');
     
     try {
         const { username, password } = req.body;
         
+        if (!username || !password) {
+            console.log('❌ Falta username o password');
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Usuario y contraseña requeridos' 
+            });
+        }
+        
+        console.log(`📝 Usuario: ${username}`);
+        
         if (username === PROVEEDOR_CREDENTIALS.username && 
             password === PROVEEDOR_CREDENTIALS.password) {
+            console.log('✅ Login exitoso');
             res.json({ 
                 success: true, 
                 message: 'Login exitoso',
+                user: { username: PROVEEDOR_CREDENTIALS.username },
                 timestamp: new Date().toISOString()
             });
         } else {
+            console.log('❌ Credenciales incorrectas');
             res.status(401).json({ 
                 success: false, 
                 error: 'Credenciales incorrectas' 
             });
         }
     } catch (error) {
-        console.error('Error en login:', error);
+        console.error('🔥 Error en login:', error);
         res.status(500).json({ 
             success: false, 
-            error: 'Error del servidor' 
+            error: 'Error en el servidor',
+            details: error.message 
         });
     }
 });
 
 // Obtener productos
 app.get('/api/proveedor/productos', (req, res) => {
+    console.log('📦 GET /api/proveedor/productos');
+    
     try {
+        if (!fs.existsSync(PRODUCTS_FILE)) {
+            console.log('⚠️ Archivo products.json no existe, creando...');
+            fs.writeFileSync(PRODUCTS_FILE, JSON.stringify([], null, 2));
+        }
+        
         const data = fs.readFileSync(PRODUCTS_FILE, 'utf8');
         const productos = JSON.parse(data);
+        
+        console.log(`✅ Enviando ${productos.length} productos`);
         res.json(productos);
     } catch (error) {
-        console.error('Error leyendo productos:', error);
-        res.status(500).json({ error: 'Error al leer productos' });
+        console.error('❌ Error leyendo productos:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error al leer productos',
+            details: error.message 
+        });
     }
 });
 
-// Crear producto (CORREGIDO para CORS)
+// CREAR NUEVO PRODUCTO - CORREGIDO
 app.post('/api/proveedor/productos', (req, res) => {
-    console.log('➕ Creando producto desde:', req.headers.origin);
-    console.log('Datos recibidos:', req.body);
+    console.log('➕ POST /api/proveedor/productos - Creando nuevo producto');
+    console.log('📦 Datos recibidos:', req.body);
     
     try {
-        const productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
+        // Validar datos requeridos
+        const { nombre, descripcion, precio, cantidad, categoria, unidad } = req.body;
+        
+        if (!nombre || !precio || !cantidad || !categoria || !unidad) {
+            console.log('❌ Faltan campos requeridos');
+            return res.status(400).json({
+                success: false,
+                error: 'Faltan campos requeridos: nombre, precio, cantidad, categoria, unidad'
+            });
+        }
+        
+        // Leer productos existentes
+        let productos = [];
+        if (fs.existsSync(PRODUCTS_FILE)) {
+            const data = fs.readFileSync(PRODUCTS_FILE, 'utf8');
+            productos = JSON.parse(data);
+        }
+        
+        // Crear nuevo ID
+        const newId = productos.length > 0 
+            ? Math.max(...productos.map(p => p.id)) + 1 
+            : 1;
         
         const nuevoProducto = {
-            id: productos.length > 0 ? Math.max(...productos.map(p => p.id)) + 1 : 1,
-            ...req.body,
+            id: newId,
+            nombre,
+            descripcion: descripcion || '',
+            precio: parseFloat(precio),
+            cantidad: parseInt(cantidad),
+            categoria,
+            unidad,
             fecha: new Date().toISOString()
         };
         
+        console.log('🆕 Nuevo producto creado:', nuevoProducto);
+        
+        // Agregar a la lista
         productos.push(nuevoProducto);
+        
+        // Guardar en archivo
         fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productos, null, 2));
         
-        console.log('✅ Producto creado:', nuevoProducto.id);
+        console.log(`✅ Producto guardado. Total productos: ${productos.length}`);
         
-        res.json({ 
-            success: true, 
+        // Responder con éxito
+        res.status(201).json({
+            success: true,
+            message: 'Producto creado exitosamente',
             producto: nuevoProducto,
-            message: 'Producto creado exitosamente'
+            totalProductos: productos.length
         });
+        
     } catch (error) {
-        console.error('❌ Error creando producto:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Error al guardar producto',
-            details: error.message 
+        console.error('🔥 Error crítico creando producto:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error al crear producto',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 });
 
 // Actualizar producto
 app.put('/api/proveedor/productos/:id', (req, res) => {
+    const productId = parseInt(req.params.id);
+    console.log(`✏️ PUT /api/proveedor/productos/${productId} - Actualizando`);
+    
     try {
-        const productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
-        const productoId = parseInt(req.params.id);
-        
-        const index = productos.findIndex(p => p.id === productoId);
-        if (index !== -1) {
-            productos[index] = { ...productos[index], ...req.body };
-            fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productos, null, 2));
-            res.json({ success: true, producto: productos[index] });
-        } else {
-            res.status(404).json({ error: 'Producto no encontrado' });
+        if (!fs.existsSync(PRODUCTS_FILE)) {
+            return res.status(404).json({ error: 'Archivo de productos no encontrado' });
         }
+        
+        const productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
+        const index = productos.findIndex(p => p.id === productId);
+        
+        if (index === -1) {
+            console.log(`❌ Producto ID ${productId} no encontrado`);
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Producto no encontrado' 
+            });
+        }
+        
+        // Actualizar producto manteniendo datos existentes
+        productos[index] = {
+            ...productos[index],
+            ...req.body,
+            id: productId // Asegurar que el ID no cambie
+        };
+        
+        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productos, null, 2));
+        
+        console.log(`✅ Producto ${productId} actualizado`);
+        res.json({ 
+            success: true, 
+            producto: productos[index],
+            message: 'Producto actualizado exitosamente'
+        });
     } catch (error) {
-        res.status(500).json({ error: 'Error al actualizar producto' });
+        console.error('❌ Error actualizando producto:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Error al actualizar producto' 
+        });
     }
 });
 
 // Eliminar producto
 app.delete('/api/proveedor/productos/:id', (req, res) => {
+    const productId = parseInt(req.params.id);
+    console.log(`🗑️ DELETE /api/proveedor/productos/${productId}`);
+    
     try {
-        let productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
-        const productoId = parseInt(req.params.id);
-        
-        const index = productos.findIndex(p => p.id === productoId);
-        if (index !== -1) {
-            const productoEliminado = productos[index];
-            productos = productos.filter(p => p.id !== productoId);
-            fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productos, null, 2));
-            res.json({ success: true, producto: productoEliminado });
-        } else {
-            res.status(404).json({ error: 'Producto no encontrado' });
+        if (!fs.existsSync(PRODUCTS_FILE)) {
+            return res.status(404).json({ error: 'Archivo de productos no encontrado' });
         }
+        
+        let productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
+        const index = productos.findIndex(p => p.id === productId);
+        
+        if (index === -1) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        const productoEliminado = productos[index];
+        productos = productos.filter(p => p.id !== productId);
+        
+        fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productos, null, 2));
+        
+        console.log(`✅ Producto ${productId} eliminado. Total: ${productos.length}`);
+        res.json({ 
+            success: true, 
+            producto: productoEliminado,
+            message: 'Producto eliminado exitosamente',
+            totalProductos: productos.length
+        });
     } catch (error) {
+        console.error('❌ Error eliminando producto:', error);
         res.status(500).json({ error: 'Error al eliminar producto' });
     }
 });
 
 // Obtener todas las tiendas
 app.get('/api/proveedor/tiendas', (req, res) => {
+    console.log('🏪 GET /api/proveedor/tiendas');
+    
     try {
-        const stores = JSON.parse(fs.readFileSync(STORES_FILE, 'utf8'));
-        res.json(stores);
+        const data = fs.readFileSync(STORES_FILE, 'utf8');
+        const tiendas = JSON.parse(data);
+        res.json(tiendas);
     } catch (error) {
+        console.error('❌ Error leyendo tiendas:', error);
         res.status(500).json({ error: 'Error al leer tiendas' });
     }
 });
 
 // Crear tienda
 app.post('/api/proveedor/tiendas', (req, res) => {
+    console.log('➕ POST /api/proveedor/tiendas - Creando tienda');
+    
     const { storename, username, password } = req.body;
     
     if (!username || !password || !storename) {
@@ -478,48 +857,59 @@ app.post('/api/proveedor/tiendas', (req, res) => {
         stores.push(nuevaTienda);
         fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
         
+        console.log(`✅ Tienda creada: ${storename} (${username})`);
         res.json({ success: true, tienda: nuevaTienda });
     } catch (error) {
+        console.error('❌ Error creando tienda:', error);
         res.status(500).json({ error: 'Error al crear tienda' });
     }
 });
 
 // Eliminar tienda
 app.delete('/api/proveedor/tiendas/:id', (req, res) => {
+    const tiendaId = parseInt(req.params.id);
+    console.log(`🗑️ DELETE /api/proveedor/tiendas/${tiendaId}`);
+    
     try {
         const stores = JSON.parse(fs.readFileSync(STORES_FILE, 'utf8'));
-        const tiendaId = parseInt(req.params.id);
-        
         const index = stores.findIndex(s => s.id === tiendaId);
-        if (index !== -1) {
-            const tiendaEliminada = stores[index];
-            stores.splice(index, 1);
-            fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
-            res.json({ success: true, tienda: tiendaEliminada });
-        } else {
-            res.status(404).json({ error: 'Tienda no encontrada' });
+        
+        if (index === -1) {
+            return res.status(404).json({ error: 'Tienda no encontrada' });
         }
+        
+        const tiendaEliminada = stores[index];
+        stores.splice(index, 1);
+        fs.writeFileSync(STORES_FILE, JSON.stringify(stores, null, 2));
+        
+        console.log(`✅ Tienda ${tiendaId} eliminada`);
+        res.json({ success: true, tienda: tiendaEliminada });
     } catch (error) {
+        console.error('❌ Error eliminando tienda:', error);
         res.status(500).json({ error: 'Error al eliminar tienda' });
     }
 });
 
 // Obtener todas las solicitudes
 app.get('/api/proveedor/solicitudes', (req, res) => {
+    console.log('📋 GET /api/proveedor/solicitudes');
+    
     try {
         const requests = JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8'));
         res.json(requests);
     } catch (error) {
+        console.error('❌ Error leyendo solicitudes:', error);
         res.status(500).json({ error: 'Error al leer solicitudes' });
     }
 });
 
 // Actualizar estado de solicitud
 app.put('/api/proveedor/solicitudes/:id', (req, res) => {
+    const solicitudId = parseInt(req.params.id);
+    console.log(`✏️ PUT /api/proveedor/solicitudes/${solicitudId}`);
+    
     try {
         const { estado, comentarios, productosAprobados } = req.body;
-        const solicitudId = parseInt(req.params.id);
-        
         const requests = JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8'));
         const products = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
         
@@ -580,19 +970,22 @@ app.put('/api/proveedor/solicitudes/:id', (req, res) => {
         
         fs.writeFileSync(REQUESTS_FILE, JSON.stringify(requests, null, 2));
         
+        console.log(`✅ Solicitud ${solicitudId} actualizada a: ${estado}`);
         res.json({ 
             success: true, 
             solicitud: requests[requestIndex],
             message: `Solicitud ${estado} correctamente`
         });
     } catch (error) {
-        console.error('Error al actualizar solicitud:', error);
+        console.error('❌ Error actualizando solicitud:', error);
         res.status(500).json({ error: 'Error al actualizar solicitud' });
     }
 });
 
 // Obtener estadísticas
 app.get('/api/proveedor/estadisticas', (req, res) => {
+    console.log('📊 GET /api/proveedor/estadisticas');
+    
     try {
         const productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
         const tiendas = JSON.parse(fs.readFileSync(STORES_FILE, 'utf8'));
@@ -611,6 +1004,7 @@ app.get('/api/proveedor/estadisticas', (req, res) => {
         
         res.json(stats);
     } catch (error) {
+        console.error('❌ Error obteniendo estadísticas:', error);
         res.status(500).json({ error: 'Error al obtener estadísticas' });
     }
 });
@@ -619,6 +1013,8 @@ app.get('/api/proveedor/estadisticas', (req, res) => {
 
 // Login tienda
 app.post('/api/tienda/login', (req, res) => {
+    console.log('🔐 POST /api/tienda/login');
+    
     const { username, password } = req.body;
     
     try {
@@ -626,13 +1022,16 @@ app.post('/api/tienda/login', (req, res) => {
         const store = stores.find(s => s.username === username && s.activa);
         
         if (!store) {
+            console.log(`❌ Tienda no encontrada: ${username}`);
             return res.status(401).json({ success: false, error: 'Tienda no encontrada' });
         }
 
         if (store.password !== password) {
+            console.log(`❌ Contraseña incorrecta para: ${username}`);
             return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
         }
 
+        console.log(`✅ Login exitoso tienda: ${store.storename}`);
         res.json({ 
             success: true, 
             store: {
@@ -642,34 +1041,29 @@ app.post('/api/tienda/login', (req, res) => {
             }
         });
     } catch (error) {
+        console.error('❌ Error en login tienda:', error);
         res.status(500).json({ success: false, error: 'Error en autenticación' });
     }
 });
 
 // Obtener productos para tiendas
 app.get('/api/tienda/productos', (req, res) => {
-    const { username, password } = req.headers;
+    console.log('📦 GET /api/tienda/productos');
     
     try {
-        const stores = JSON.parse(fs.readFileSync(STORES_FILE, 'utf8'));
-        const store = stores.find(s => s.username === username && s.activa);
-        
-        if (!store || store.password !== password) {
-            return res.status(401).json({ error: 'No autorizado' });
-        }
-        
         const productos = JSON.parse(fs.readFileSync(PRODUCTS_FILE, 'utf8'));
         res.json(productos);
     } catch (error) {
+        console.error('❌ Error leyendo productos para tienda:', error);
         res.status(500).json({ error: 'Error al leer productos' });
     }
 });
 
 // Crear solicitud de compra
 app.post('/api/tienda/solicitudes', (req, res) => {
-    const { tiendaId, productos, total, comentarios } = req.body;
+    console.log('🛒 POST /api/tienda/solicitudes');
     
-    console.log('📦 Nueva solicitud desde tienda:', { tiendaId, total, productos });
+    const { tiendaId, productos, total, comentarios } = req.body;
     
     try {
         const requests = JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8'));
@@ -736,13 +1130,14 @@ app.post('/api/tienda/solicitudes', (req, res) => {
         requests.push(nuevaSolicitud);
         fs.writeFileSync(REQUESTS_FILE, JSON.stringify(requests, null, 2));
         
+        console.log(`✅ Solicitud creada: #${nuevaSolicitud.id} para ${tienda.storename}`);
         res.json({ 
             success: true, 
             solicitud: nuevaSolicitud,
             message: 'Solicitud enviada correctamente' 
         });
     } catch (error) {
-        console.error('Error al crear solicitud:', error);
+        console.error('❌ Error creando solicitud:', error);
         res.status(500).json({ error: 'Error al crear solicitud: ' + error.message });
     }
 });
@@ -750,12 +1145,14 @@ app.post('/api/tienda/solicitudes', (req, res) => {
 // Obtener solicitudes de una tienda
 app.get('/api/tienda/:id/solicitudes', (req, res) => {
     const tiendaId = parseInt(req.params.id);
+    console.log(`📋 GET /api/tienda/${tiendaId}/solicitudes`);
     
     try {
         const requests = JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8'));
         const tiendaSolicitudes = requests.filter(r => r.tiendaId === tiendaId);
         res.json(tiendaSolicitudes);
     } catch (error) {
+        console.error('❌ Error leyendo solicitudes de tienda:', error);
         res.status(500).json({ error: 'Error al leer solicitudes' });
     }
 });
@@ -763,6 +1160,7 @@ app.get('/api/tienda/:id/solicitudes', (req, res) => {
 // Obtener productos aprobados para una tienda
 app.get('/api/tienda/:id/productos-aprobados', (req, res) => {
     const tiendaId = parseInt(req.params.id);
+    console.log(`✅ GET /api/tienda/${tiendaId}/productos-aprobados`);
     
     try {
         const requests = JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8'));
@@ -792,6 +1190,7 @@ app.get('/api/tienda/:id/productos-aprobados', (req, res) => {
         
         res.json(productosAprobados);
     } catch (error) {
+        console.error('❌ Error leyendo productos aprobados:', error);
         res.status(500).json({ error: 'Error al leer productos aprobados' });
     }
 });
@@ -799,6 +1198,7 @@ app.get('/api/tienda/:id/productos-aprobados', (req, res) => {
 // Obtener registro de actividades
 app.get('/api/tienda/:id/registro-actividades', (req, res) => {
     const tiendaId = parseInt(req.params.id);
+    console.log(`📝 GET /api/tienda/${tiendaId}/registro-actividades`);
     
     try {
         const requests = JSON.parse(fs.readFileSync(REQUESTS_FILE, 'utf8'));
@@ -833,26 +1233,32 @@ app.get('/api/tienda/:id/registro-actividades', (req, res) => {
         
         res.json(activities);
     } catch (error) {
+        console.error('❌ Error leyendo registro de actividades:', error);
         res.status(500).json({ error: 'Error al leer registro de actividades' });
     }
 });
 
 // ========== MANEJO DE ERRORES ==========
 
-// Ruta no encontrada
+// Ruta no encontrada (404)
 app.use((req, res) => {
+    console.log(`❌ RUTA NO ENCONTRADA: ${req.method} ${req.originalUrl}`);
+    console.log(`   Origin: ${req.headers.origin}`);
+    console.log(`   Headers:`, req.headers);
+    
     res.status(404).json({
         success: false,
         error: 'Ruta no encontrada',
-        path: req.url,
+        path: req.originalUrl,
         method: req.method,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        suggestion: 'Visita /api/routes para ver todas las rutas disponibles'
     });
 });
 
 // Manejo de errores global
 app.use((err, req, res, next) => {
-    console.error('🔥 Error global:', err);
+    console.error('🔥 ERROR GLOBAL:', err);
     
     res.status(err.status || 500).json({
         success: false,
@@ -865,18 +1271,22 @@ app.use((err, req, res, next) => {
 // ========== INICIAR SERVIDOR ==========
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n🚀 ============================================`);
-    console.log(`🚀 Servidor API corriendo en puerto ${PORT}`);
-    console.log(`🚀 Configurado para GitHub Pages + Render`);
-    console.log(`🚀 ============================================`);
-    console.log(`🔗 URL: http://localhost:${PORT}`);
-    console.log(`🔗 GitHub Pages: https://salazarroman429-ui.github.io`);
-    console.log(`\n📋 Endpoints de prueba:`);
-    console.log(`   • GET  /ping           - Prueba básica`);
-    console.log(`   • GET  /api/test-cors  - Prueba CORS`);
-    console.log(`   • GET  /api/debug      - Info de debug`);
-    console.log(`\n🔑 Credenciales:`);
-    console.log(`   • Proveedor: Admin429 / adm429`);
-    console.log(`   • Tienda demo: tienda1 / tienda123`);
-    console.log(`\n⚠️  Logs detallados activados`);
+    console.log('\n' + '='.repeat(60));
+    console.log('🚀 SERVIDOR INICIADO CORRECTAMENTE');
+    console.log('='.repeat(60));
+    console.log(`📡 Puerto: ${PORT}`);
+    console.log(`🌐 Entorno: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🕐 Iniciado: ${new Date().toISOString()}`);
+    console.log('\n📋 ENDPOINTS PRINCIPALES:');
+    console.log('   POST   /api/proveedor/productos     - Crear producto');
+    console.log('   GET    /api/proveedor/productos     - Listar productos');
+    console.log('   PUT    /api/proveedor/productos/:id - Actualizar producto');
+    console.log('   DELETE /api/proveedor/productos/:id - Eliminar producto');
+    console.log('\n🔧 HERRAMIENTAS DE DEBUG:');
+    console.log('   GET    /                            - Página de diagnóstico');
+    console.log('   GET    /health                      - Health check');
+    console.log('   GET    /api/debug/cors              - Debug CORS');
+    console.log('   GET    /api/routes                  - Listar todas las rutas');
+    console.log('\n✅ Servidor listo para recibir peticiones');
+    console.log('='.repeat(60) + '\n');
 });
