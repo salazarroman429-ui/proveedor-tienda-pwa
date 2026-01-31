@@ -1,5 +1,5 @@
 // app.js - Versión completa actualizada (proveedor)
-const API_URL = 'https://proveedor-tienda-api.onrender.com/api';
+const API_URL = 'https://proveedor-api-salazar.onrender.com/api';
 let deferredPrompt;
 let isAuthenticated = false;
 let authHeaders = {};
